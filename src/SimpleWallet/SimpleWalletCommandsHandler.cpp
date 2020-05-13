@@ -430,12 +430,15 @@ bool SimpleWalletCommandsHandler::init()
       bool passwordSuccess = true;
 
       // Ask the user for the spend private key
-      Crypto::PublicKey inputSpendPublicKey;
+      std::string inputSpendPublicKey;
 
+      do
+      {
         std::cout << "Spend public key : ";
         std::getline(std::cin, inputSpendPublicKey);
-        //boost::algorithm::trim(inputSpendPublicKey);
-      m_restorePublicKey = inputSpendPublicKey;
+        boost::algorithm::trim(inputSpendPublicKey);
+        } while (inputSpendPublicKey.empty());
+        m_restorePublicKey = inputSpendPublicKey;
 
       // Ask the user for the view private key
       std::string viewPrivateKeyInput;
@@ -1083,11 +1086,8 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
   AccountKeys accountKeys;
   accountKeys.viewSecretKey = viewPrivateKey;
 
-  /*Crypto::PublicKey spendPublicKey;
-  if(!Crypto::public_key_to_public_key(spendPrivateKey, spendPublicKey))
-  {
-    return false;
-  }*/
+  Crypto::PublicKey spendPublicKey;
+  Common::podFromHex(m_restorePublicKey, spendPublicKey);
 
   Crypto::PublicKey viewPublicKey;
   if(!Crypto::secret_key_to_public_key(viewPrivateKey, viewPublicKey))
@@ -1095,7 +1095,7 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     return false;
   }
 
-  accountKeys.address.spendPublicKey = m_restorePublicKey;
+  accountKeys.address.spendPublicKey = spendPublicKey;
   accountKeys.address.viewPublicKey = viewPublicKey;
 
   try
@@ -1128,9 +1128,7 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     std::cout <<
       "\nWallet Address\n" << m_walletLegacyPtr->getAddress() << std::endl <<
       "\nView Private Key\n" << Common::podToHex(accountKeys.viewSecretKey) << std::endl <<
-      "\nSpend Private Key\n" << Common::podToHex(accountKeys.spendSecretKey) << std::endl <<
-      "\nPlease write down and keep both private keys safe\n" << std::endl <<
-      "\nWallet files can become corrupted, and the only way to recover the funds will be with the private keys\n" << std::endl;
+      "\nThis is a view onlt wallet you cannot spend coins\n" << std::endl;
   }
   catch (const std::exception& e)
   {

@@ -89,7 +89,7 @@ private:
   std::unique_ptr<NodeRpcProxy> m_nodeRpcProxyPtr;
   SimpleWalletConfigurationOptions& m_simpleWalletConfigurationOptions;
   std::string m_spendPrivateKey;
-  Crypto::PublicKey m_restorePublicKey;
+  std::string m_restorePublicKey;
   std::string m_viewPrivateKey;
   std::string m_walletFilenameWithExtension;
   std::string m_walletFileArg;
