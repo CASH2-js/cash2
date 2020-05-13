@@ -143,7 +143,7 @@ bool SimpleWalletCommandsHandler::init()
   std::cout << "3";
   Common::Console::setTextColor(Common::Console::Color::Default);
 
-  std::cout << "] Restore wallet from private keys\n [";
+  std::cout << "] Restore view only wallet from private key\n [";
 
   Common::Console::setTextColor(Common::Console::Color::BrightRed);
   std::cout << "4";
@@ -427,39 +427,15 @@ bool SimpleWalletCommandsHandler::init()
       }
       
       // Ask the user to confirm the password
-      bool passwordSuccess = false;
-      while(!passwordSuccess)
-      {
-        while (!pwd_container.read_confirm_password())
-        {
-          m_logger(Logging::ERROR, Logging::RED) << "Error : Could not read confirm password, please try again";
-        }
-
-        if (!pwd_container.passwords_match())
-        {
-          m_logger(Logging::ERROR, Logging::RED) << "Error : Passwords do not match, please try again";
-
-          // ask for the password again
-          while (!pwd_container.read_password())
-          {
-            m_logger(Logging::ERROR, Logging::RED) << "Error : Could not read password, please try again";
-          }
-        }
-        else
-        {
-          passwordSuccess = true;
-        }
-      }
+      bool passwordSuccess = true;
 
       // Ask the user for the spend private key
-      std::string spendPrivateKeyInput;
-      do
-      {
-        std::cout << "Spend private key : ";
-        std::getline(std::cin, spendPrivateKeyInput);
-        boost::algorithm::trim(spendPrivateKeyInput);
-      } while (spendPrivateKeyInput.empty());
-      m_spendPrivateKey = spendPrivateKeyInput;
+      Crypto::PublicKey inputSpendPublicKey;
+
+        std::cout << "Spend public key : ";
+        std::getline(std::cin, inputSpendPublicKey);
+        //boost::algorithm::trim(inputSpendPublicKey);
+      m_restorePublicKey = inputSpendPublicKey;
 
       // Ask the user for the view private key
       std::string viewPrivateKeyInput;
@@ -1090,34 +1066,28 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
   m_walletLegacyPtr.reset(new WalletLegacy(m_currency, *m_nodeRpcProxyPtr.get()));
   m_walletLegacyPtr->addObserver(this);
 
-  if (!std::all_of(m_spendPrivateKey.begin(), m_spendPrivateKey.end(), ::isxdigit) ||
-      !std::all_of(m_viewPrivateKey.begin(), m_viewPrivateKey.end(), ::isxdigit))
+  if (!std::all_of(m_viewPrivateKey.begin(), m_viewPrivateKey.end(), ::isxdigit))
   {
     return false;
   }
 
-  if(m_spendPrivateKey.length() != 64 || m_viewPrivateKey.length() != 64)
+  if (m_viewPrivateKey.length() != 64)
   {
     return false;
   }
-
-  // convert std::string m_spendPrivateKey to Crypto::SecretKey spendPrivateKey
-  Crypto::SecretKey spendPrivateKey;
-  Common::podFromHex(m_spendPrivateKey, spendPrivateKey);
 
   // convert std::string m_viewPrivateKey to Crypto::SecretKey viewPrivateKey
   Crypto::SecretKey viewPrivateKey;
   Common::podFromHex(m_viewPrivateKey, viewPrivateKey);
 
   AccountKeys accountKeys;
-  accountKeys.spendSecretKey = spendPrivateKey;
   accountKeys.viewSecretKey = viewPrivateKey;
 
-  Crypto::PublicKey spendPublicKey;
-  if(!Crypto::secret_key_to_public_key(spendPrivateKey, spendPublicKey))
+  /*Crypto::PublicKey spendPublicKey;
+  if(!Crypto::public_key_to_public_key(spendPrivateKey, spendPublicKey))
   {
     return false;
-  }
+  }*/
 
   Crypto::PublicKey viewPublicKey;
   if(!Crypto::secret_key_to_public_key(viewPrivateKey, viewPublicKey))
@@ -1125,7 +1095,7 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     return false;
   }
 
-  accountKeys.address.spendPublicKey = spendPublicKey;
+  accountKeys.address.spendPublicKey = m_restorePublicKey;
   accountKeys.address.viewPublicKey = viewPublicKey;
 
   try
@@ -1143,7 +1113,7 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     }
 
     // save new wallet
-    try 
+    /*try 
     {
       WalletHelper::saveWallet(*m_walletLegacyPtr, m_walletFilenameWithExtension);
     }
@@ -1151,7 +1121,7 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     {
       m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to save restored wallet : " << e.what();
       throw;
-    }
+    }*/
 
     m_walletLegacyPtr->getAccountKeys(accountKeys);
 

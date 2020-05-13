@@ -11,6 +11,7 @@
 #include <cstring>
 #include <memory>
 #include <mutex>
+#include <iostream>
 
 #include "Common/Varint.h"
 #include "crypto.h"
@@ -61,6 +62,7 @@ namespace Crypto {
       return false;
     }
     ge_scalarmult_base(&point, reinterpret_cast<const unsigned char*>(&sec));
+    std::cout << &point;
     ge_p3_tobytes(reinterpret_cast<unsigned char*>(&pub), &point);
     return true;
   }
