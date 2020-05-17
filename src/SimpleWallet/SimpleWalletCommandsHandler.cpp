@@ -93,6 +93,7 @@ bool SimpleWalletCommandsHandler::deinit()
 
 bool SimpleWalletCommandsHandler::init()
 {
+
   m_daemonAddress = m_simpleWalletConfigurationOptions.daemonAddress;
   m_daemonHost = m_simpleWalletConfigurationOptions.daemonHost;
   m_daemonPort = m_simpleWalletConfigurationOptions.daemonPort;
@@ -121,35 +122,7 @@ bool SimpleWalletCommandsHandler::init()
 
   char c;
 
-  Common::Console::setTextColor(Common::Console::Color::BrightRed);
-  std::cout << "\nCash2 SimpleWallet " << PROJECT_VERSION << '.' << PROJECT_VERSION_BUILD_NO << std::endl;
-  Common::Console::setTextColor(Common::Console::Color::Default);
-
-  std::cout << "\nWhat would you like to do?\n\n [";
-
-  Common::Console::setTextColor(Common::Console::Color::BrightRed);
-  std::cout << "1";
-  Common::Console::setTextColor(Common::Console::Color::Default);
-
-  std::cout << "] Open existing wallet\n [";
-
-  Common::Console::setTextColor(Common::Console::Color::BrightRed);
-  std::cout << "2";
-  Common::Console::setTextColor(Common::Console::Color::Default);
-
-  std::cout << "] Create new wallet\n [";
-
-  Common::Console::setTextColor(Common::Console::Color::BrightRed);
-  std::cout << "3";
-  Common::Console::setTextColor(Common::Console::Color::Default);
-
-  std::cout << "] Restore view only wallet from private key\n [";
-
-  Common::Console::setTextColor(Common::Console::Color::BrightRed);
-  std::cout << "4";
-  Common::Console::setTextColor(Common::Console::Color::Default);
-
-  std::cout << "] Exit\n\n";
+  std::cout << "What would you like to do?";
 
   // Ask the user to choose option 1, 2, 3, or 4
   do {
@@ -356,8 +329,9 @@ bool SimpleWalletCommandsHandler::init()
         m_nodeRpcProxyPtr->init(callback);
         auto error = f_error.get();
         if (error) {
-          m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to init NodeRPCProxy : " << error.message();
-          return false;
+          std::cout << "Failed";
+          //m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to init NodeRPCProxy : " << error.message();
+          return true;
         }
 
         nodeInitSuccess = true;
@@ -384,7 +358,7 @@ bool SimpleWalletCommandsHandler::init()
       // Ask the user for wallet name
       std::string walletNameUserInput;
       do {
-        std::cout << "Wallet name : ";
+        std::cout << "Wallet name:";
         std::getline(std::cin, walletNameUserInput);
         boost::algorithm::trim(walletNameUserInput);
       } while (walletNameUserInput.empty());
@@ -393,6 +367,7 @@ bool SimpleWalletCommandsHandler::init()
 
       std::string walletFileName;
 
+
       // Check that wallet name does not already exists
       bool walletNameValid = false;
       while(!walletNameValid)
@@ -400,18 +375,8 @@ bool SimpleWalletCommandsHandler::init()
         WalletHelper::prepareFileNames(m_generateNew, walletFileName);
         boost::system::error_code errorCodeIgnore;
         if (boost::filesystem::exists(walletFileName, errorCodeIgnore)) {
-          Common::Console::setTextColor(Common::Console::Color::BrightRed);
-          std::cout << "\n" << walletFileName << " already exists, please pick a new wallet name\n\n";
-          Common::Console::setTextColor(Common::Console::Color::Default);
-          
-          // Ask the user again for the wallet name
-          do {
-            std::cout << "Wallet name : ";
-            std::getline(std::cin, walletNameUserInput);
-            boost::algorithm::trim(walletNameUserInput);
-          } while (walletNameUserInput.empty());
-
-          m_generateNew = walletNameUserInput;
+          std::cout << "fail_exists";
+          return false;
         }
         else
         {
@@ -420,21 +385,21 @@ bool SimpleWalletCommandsHandler::init()
       }
 
       // Ask the user for wallet password
-      Tools::PasswordContainer pwd_container;
-      while (!pwd_container.read_password())
-      {
-        m_logger(Logging::ERROR, Logging::RED) << "Error : Could not read password, please try again";
-      }
-      
-      // Ask the user to confirm the password
-      bool passwordSuccess = true;
+     std::string passwordInput;
+      do {
+        std::cout << "Password:";
+        std::getline(std::cin, passwordInput);
+        boost::algorithm::trim(passwordInput);
+      } while (passwordInput.empty());
+
+      m_password = passwordInput;
 
       // Ask the user for the spend private key
       std::string inputSpendPublicKey;
 
       do
       {
-        std::cout << "Spend public key : ";
+        std::cout << "Spend public key:";
         std::getline(std::cin, inputSpendPublicKey);
         boost::algorithm::trim(inputSpendPublicKey);
         } while (inputSpendPublicKey.empty());
@@ -444,7 +409,7 @@ bool SimpleWalletCommandsHandler::init()
       std::string viewPrivateKeyInput;
       do
       {
-        std::cout << "View private key : ";
+        std::cout << "View private key:";
         std::getline(std::cin, viewPrivateKeyInput);
         boost::algorithm::trim(viewPrivateKeyInput);
       } while (viewPrivateKeyInput.empty());
@@ -463,20 +428,22 @@ bool SimpleWalletCommandsHandler::init()
         m_nodeRpcProxyPtr->init(callback);
         auto error = f_error.get();
         if (error) {
-          m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to init NodeRPCProxy : " << error.message();
+          //m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to init NodeRPCProxy : " << error.message();
           return false;
+        } else {
+          nodeInitSuccess = true;
         }
-
-        nodeInitSuccess = true;
       }
 
       // Try to restore wallet from private keys
-      if (!restore_wallet_from_private_keys(walletFileName, pwd_container.password()))
+      if (!restore_wallet_from_private_keys(walletFileName, m_password))
       {
-        m_logger(Logging::ERROR, Logging::RED) << "Error : Wallet restore failed, please try again";
+        std::cout << "fail_restore";
+        return false;
       }
       else
       {
+        std::cout << "success";
         restoreWalletSuccess = true;
       }
     }
@@ -574,7 +541,7 @@ void SimpleWalletCommandsHandler::connectionStatusUpdated(bool connected)
   }
   else
   {
-    m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
+    //m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
   }
 }
 
@@ -1108,37 +1075,32 @@ bool SimpleWalletCommandsHandler::restore_wallet_from_private_keys(const std::st
     std::error_code walletLegacyInitErrorCode = walletLegacyInitErrorFuture.get();
     m_walletLegacyInitErrorPromisePtr.reset(nullptr);
     if (walletLegacyInitErrorCode) {
-      m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to restore wallet : " << walletLegacyInitErrorCode.message();
+      //m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to restore wallet : " << walletLegacyInitErrorCode.message();
       return false;
     }
 
     // save new wallet
-    /*try 
+    try 
     {
       WalletHelper::saveWallet(*m_walletLegacyPtr, m_walletFilenameWithExtension);
     }
     catch (std::exception& e)
     {
-      m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to save restored wallet : " << e.what();
+      //m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to save restored wallet : " << e.what();
       throw;
-    }*/
+    }
 
     m_walletLegacyPtr->getAccountKeys(accountKeys);
-
-    std::cout <<
-      "\nWallet Address\n" << m_walletLegacyPtr->getAddress() << std::endl <<
-      "\nView Private Key\n" << Common::podToHex(accountKeys.viewSecretKey) << std::endl <<
-      "\nThis is a view onlt wallet you cannot spend coins\n" << std::endl;
   }
   catch (const std::exception& e)
   {
-    m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to generate new wallet : " << e.what();
+    //m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to generate new wallet : " << e.what();
     return false;
   }
 
-  m_logger(Logging::INFO) <<
+  /*m_logger(Logging::INFO) <<
     "Type \"help\" to see a list of available commands.\n" <<
-    "Always type \"exit\" to save and close SimpleWallet.\n";
+    "Always type \"exit\" to save and close SimpleWallet.\n";*/
   return true;
 }
 
@@ -1388,7 +1350,7 @@ bool SimpleWalletCommandsHandler::start_mining(const std::vector<std::string>& a
     }
 
   } catch (const ConnectException&) {
-    m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
+    //m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
   } catch (const std::exception& e) {
     m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to invoke RPC method : " << e.what();
   }
@@ -1426,7 +1388,7 @@ bool SimpleWalletCommandsHandler::stop_mining(const std::vector<std::string>& ar
       m_logger(Logging::ERROR, Logging::RED) << "Error : Mining has NOT been stopped : " << error;
     }
   } catch (const ConnectException&) {
-    m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
+    //m_logger(Logging::ERROR, Logging::RED) << "SimpleWallet failed to connect to the daemon";
   } catch (const std::exception& e) {
     m_logger(Logging::ERROR, Logging::RED) << "Error : Failed to invoke RPC method : " << e.what();
   }

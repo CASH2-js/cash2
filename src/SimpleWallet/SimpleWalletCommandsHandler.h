@@ -82,6 +82,7 @@ private:
   uint16_t m_daemonPort;
   System::Dispatcher& m_dispatcher;
   std::string m_generateNew;
+  std::string m_password;
   std::chrono::system_clock::time_point m_lastBlockchainHeightPrintTime;
   std::chrono::system_clock::time_point m_lastBlockchainHeightUpdateTime;
   Logging::LoggerRef m_logger;

@@ -72,7 +72,7 @@ namespace Tools
     bool r;
     if (is_cin_tty())
     {
-      std::cout << "Password : ";
+      std::cout << "Password:";
       r = read_password_from_tty();
     }
     else

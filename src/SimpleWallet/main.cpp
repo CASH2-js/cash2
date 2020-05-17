@@ -6,6 +6,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <boost/program_options.hpp>
+#include <httpserver.hpp>
 
 #include "Common/CommandLine.h"
 #include "Common/PathTools.h"
@@ -13,6 +14,25 @@
 #include "SimpleWalletCommandsHandler.h"
 #include "SimpleWalletConfigurationOptions.h"
 #include "version.h"
+
+/*using namespace httpserver;
+
+class hello_world_resource : public http_resource {
+public:
+    const std::shared_ptr<http_response> render(const http_request&) {
+        return std::shared_ptr<http_response>(new string_response("Hello, World!"));
+    }
+};
+
+int initWebServer() {
+  webserver ws = create_webserver(8080);
+
+    //hello_world_resource hwr;
+    //ws.register_resource("/hello", &hwr);
+    //ws.start(true);
+    
+    return 0;
+}*/
 
 int main(int argc, char* argv[]) {
 #ifdef WIN32
@@ -35,6 +55,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::store(command_line::parse_command_line(argc, argv, simpleWalletConfigurationOptionsDescription, true), vm);
 
     simpleWalletConfigurationOptions.init(vm);
+    //initWebServer();
 
     if (simpleWalletConfigurationOptions.help) {
       simpleWalletConfigurationOptions.printHelp(simpleWalletConfigurationOptionsDescription);
@@ -72,7 +93,7 @@ int main(int argc, char* argv[]) {
     CryptoNote::SimpleWalletCommandsHandler simpleWalletCommandsHandler(dispatcher, currency, logManager, simpleWalletConfigurationOptions);
     
     if (!simpleWalletCommandsHandler.init()) {
-      logger(Logging::ERROR) << "\nExiting SimpleWallet ..."; 
+      //logger(Logging::ERROR) << "\nExiting SimpleWallet ..."; 
       return 1; 
     }
 
