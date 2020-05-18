@@ -15,25 +15,6 @@
 #include "SimpleWalletConfigurationOptions.h"
 #include "version.h"
 
-/*using namespace httpserver;
-
-class hello_world_resource : public http_resource {
-public:
-    const std::shared_ptr<http_response> render(const http_request&) {
-        return std::shared_ptr<http_response>(new string_response("Hello, World!"));
-    }
-};
-
-int initWebServer() {
-  webserver ws = create_webserver(8080);
-
-    //hello_world_resource hwr;
-    //ws.register_resource("/hello", &hwr);
-    //ws.start(true);
-    
-    return 0;
-}*/
-
 int main(int argc, char* argv[]) {
 #ifdef WIN32
   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -55,7 +36,6 @@ int main(int argc, char* argv[]) {
     boost::program_options::store(command_line::parse_command_line(argc, argv, simpleWalletConfigurationOptionsDescription, true), vm);
 
     simpleWalletConfigurationOptions.init(vm);
-    //initWebServer();
 
     if (simpleWalletConfigurationOptions.help) {
       simpleWalletConfigurationOptions.printHelp(simpleWalletConfigurationOptionsDescription);
@@ -106,7 +86,7 @@ int main(int argc, char* argv[]) {
     if (!simpleWalletCommandsHandler.deinit()) {
       logger(Logging::ERROR, Logging::BRIGHT_RED) << "Failed to close SimpleWallet";
     } else {
-      logger(Logging::INFO) << "\nSimpleWallet closed";
+      //logger(Logging::INFO) << "\nSimpleWallet closed";
     }
   } catch (const std::exception& e) {
     logger(Logging::ERROR, Logging::BRIGHT_RED) << "Exception : " << e.what();

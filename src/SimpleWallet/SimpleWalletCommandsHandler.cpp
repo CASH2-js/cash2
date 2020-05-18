@@ -139,6 +139,7 @@ bool SimpleWalletCommandsHandler::init()
   
   if (c == '1')
   {
+    m_walletCreation = false;
     // Open existing wallet
 
     bool walletNameValid = false;
@@ -153,7 +154,7 @@ bool SimpleWalletCommandsHandler::init()
         // Ask the user for wallet name
         std::string walletNameUserInput;
         do {
-          std::cout << "Wallet name : ";
+          std::cout << "Wallet name:";
           std::getline(std::cin, walletNameUserInput);
           boost::algorithm::trim(walletNameUserInput);
         } while (walletNameUserInput.empty());
@@ -169,16 +170,8 @@ bool SimpleWalletCommandsHandler::init()
           boost::system::error_code ignore;
 
           if (!boost::filesystem::exists(walletFileName, ignore)) {
-            Common::Console::setTextColor(Common::Console::Color::BrightRed);
-            std::cout << "\n" << walletFileName << " does not exist, please try again\n\n";
-            Common::Console::setTextColor(Common::Console::Color::Default);
-            
-            // Ask the user again for the wallet name
-            do {
-              std::cout << "Wallet name : ";
-              std::getline(std::cin, walletNameUserInput);
-              boost::algorithm::trim(walletNameUserInput);
-            } while (walletNameUserInput.empty());
+            std::cout << "fail_notexist";
+            return false;
           }
           else
           {
@@ -191,14 +184,14 @@ bool SimpleWalletCommandsHandler::init()
       }
 
       // Ask the user for wallet password
-      Tools::PasswordContainer pwd_container;
-      if (!passwordCorrect)
-      {
-        while (!pwd_container.read_password())
-        {
-          m_logger(Logging::ERROR, Logging::RED) << "Error : Could not read password, please try again";
-        }
-      }
+      std::string restorePasswordInput;
+        do {
+          std::cout << "Password:";
+          std::getline(std::cin, restorePasswordInput);
+          boost::algorithm::trim(restorePasswordInput);
+        } while (restorePasswordInput.empty());
+
+        m_restorePassword = restorePasswordInput;
 
       // Try to init NodeRPCProxy
       if (!nodeInitSuccess)
@@ -224,7 +217,7 @@ bool SimpleWalletCommandsHandler::init()
 
       // Try to open wallet with password
       try {
-        m_walletFilenameWithExtension = tryToOpenWalletOrLoadKeysOrThrow(m_walletFileArg, pwd_container.password());
+        m_walletFilenameWithExtension = tryToOpenWalletOrLoadKeysOrThrow(m_walletFileArg, m_restorePassword);
         loadWalletSuccess = true;
         passwordCorrect = true;
       } catch (const std::exception& e) {
@@ -233,12 +226,10 @@ bool SimpleWalletCommandsHandler::init()
     }
 
     m_walletLegacyPtr->addObserver(this);
-
-    m_logger(Logging::INFO, Logging::BRIGHT_WHITE) << "\nWallet Address\n" << m_walletLegacyPtr->getAddress() << "\n";
-    m_logger(Logging::INFO) << "Loading wallet ...\n";
   }
   else if (c == '2')
   {
+    m_walletCreation = false;
     // Create new wallet
 
     bool createNewWalletSuccess = false;
@@ -349,6 +340,7 @@ bool SimpleWalletCommandsHandler::init()
   }
   else if (c == '3')
   {
+    m_walletCreation = true;
     // Restore wallet from private keys
 
     bool restoreWalletSuccess = false;
@@ -470,10 +462,10 @@ bool SimpleWalletCommandsHandler::start_handling()
     }
   }
 
-  std::cout << "\n\nType \"help\" to see the list of available commands." << std::endl;
-
   std::string walletName = Common::RemoveExtension(m_walletFilenameWithExtension).substr(0, 20);
-  m_consoleHandler.start(false, "\n[" + walletName + "] : ", Common::Console::Color::BrightYellow);
+  if (!m_walletCreation) {
+    m_consoleHandler.start(false, "\n[" + walletName + "] : ", Common::Console::Color::BrightYellow);
+  }
   return true;
 }
 
@@ -527,8 +519,9 @@ bool SimpleWalletCommandsHandler::all_transactions(const std::vector<std::string
 
 bool SimpleWalletCommandsHandler::balance(const std::vector<std::string>& args)
 {
-  std::cout << "available balance: " << m_currency.formatAmount(m_walletLegacyPtr->actualBalance()) <<
-    ", locked amount: " << m_currency.formatAmount(m_walletLegacyPtr->pendingBalance()) << '\n';
+
+  std::cout << m_currency.formatAmount(m_walletLegacyPtr->actualBalance()) << "\n";
+  std::cout << m_currency.formatAmount(m_walletLegacyPtr->pendingBalance());
 
   return true;
 }

@@ -86,13 +86,14 @@ void WalletLegacySerializer::deserialize(std::istream& inputStream, const std::s
 
   throwIfKeysMissmatch(m_accountRef.getAccountKeys().viewSecretKey, m_accountRef.getAccountKeys().address.viewPublicKey);
 
-  if (m_accountRef.getAccountKeys().spendSecretKey != NULL_SECRET_KEY) {
+  /*if (m_accountRef.getAccountKeys().spendSecretKey != NULL_SECRET_KEY) {
+    std::cout << "6\n";
     throwIfKeysMissmatch(m_accountRef.getAccountKeys().spendSecretKey, m_accountRef.getAccountKeys().address.spendPublicKey);
-  } else {
+  } else {*/
     if (!Crypto::check_key(m_accountRef.getAccountKeys().address.spendPublicKey)) {
       throw std::system_error(make_error_code(CryptoNote::error::WRONG_PASSWORD));
     }
-  }
+  //}
 
   // deserialize deatailsSaved
   bool detailsSaved;
